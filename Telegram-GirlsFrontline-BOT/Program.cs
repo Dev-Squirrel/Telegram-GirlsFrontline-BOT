@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using Telegram.Bot;
 using Telegram.Bot.Args;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace Telegram_GirlsFrontline_BOT
@@ -42,19 +45,36 @@ namespace Telegram_GirlsFrontline_BOT
             if (message == null || message.Type != MessageType.TextMessage) return;
 
             // "!인형제조" OR "!인형제작" 및 여러 명령어 감지
-            if (message.Text.StartsWith("!인형제조 ") | message.Text.StartsWith("!인형제작 ") | message.Text.StartsWith("!인형건조 ") | message.Text.StartsWith("!총기제조 ") | message.Text.StartsWith("!총기제작 ") | message.Text.StartsWith("!총기건조 "))
+            if (message.Text.StartsWith("!인형제조 ") | message.Text.StartsWith("!인형제작 ") | message.Text.StartsWith("!인형건조 ")
+                | message.Text.StartsWith("!총기제조 ") | message.Text.StartsWith("!총기제작 ") | message.Text.StartsWith("!총기건조 ")
+                | message.Text.StartsWith("!인형 ") | message.Text.StartsWith("!인제 ") | message.Text.StartsWith("!인조 ")
+                | message.Text.StartsWith("!ㅇㅎ ") | message.Text.StartsWith("!ㅇㅈ ")
+                | message.Text.StartsWith("!총기 ") | message.Text.StartsWith("!총제 ") | message.Text.StartsWith("!총조 ")
+                | message.Text.StartsWith("!ㅊㄱ ") | message.Text.StartsWith("!ㅊㅈ "))
             {
-                // :, ; 문자열 제거 및 읽을 순서 지정
-                string result = message.Text.Substring(6).Replace(":", "").Replace(";", "");
+                string result;
 
-                // 3글자면 앞에 "0" 추가
-                if (result.Length == 3)
+                // 2, 4글자 분류
+                if (message.Text.StartsWith("!인형 ") | message.Text.StartsWith("!인제 ") | message.Text.StartsWith("!인조 ")
+                | message.Text.StartsWith("!ㅇㅎ ") | message.Text.StartsWith("!ㅇㅈ ")
+                | message.Text.StartsWith("!총기 ") | message.Text.StartsWith("!총제 ") | message.Text.StartsWith("!총조 ")
+                | message.Text.StartsWith("!ㅊㄱ ") | message.Text.StartsWith("!ㅊㅈ "))
                 {
-                    result = "0" + result;
+                    result = message.Text.Substring(4).Replace(":", "").Replace(";", "");
+                }
+                else
+                {
+                    result = message.Text.Substring(6).Replace(":", "").Replace(";", "");
                 }
 
                 try
                 {
+                    // 3글자면 앞에 "0" 추가
+                    if (result.Length == 3)
+                    {
+                        result = "0" + result;
+                    }
+
                     // 텍스트 파일을 한 번에 한 줄씩 읽기
                     for (int i = 0; i < textValue1.Length; i++)
                     {
@@ -95,10 +115,22 @@ namespace Telegram_GirlsFrontline_BOT
             }
 
             // "!장비제작" 및 여러 명령어 감지
-            else if (message.Text.StartsWith("!장비제조 ") | message.Text.StartsWith("!장비제작 ") | message.Text.StartsWith("!장비건조 "))
+            else if (message.Text.StartsWith("!장비제조 ") | message.Text.StartsWith("!장비제작 ") | message.Text.StartsWith("!장비건조 ")
+                     | message.Text.StartsWith("!장비 ") | message.Text.StartsWith("!장제 ") | message.Text.StartsWith("!장건 ")
+                     | message.Text.StartsWith("!ㅈㅂ ") | message.Text.StartsWith("!ㅈㅈ ") | message.Text.StartsWith("!ㅈㄱ "))
             {
-                // :, ; 문자열 제거 및 읽을 순서 지정
-                string result = message.Text.Substring(6).Replace(":", "").Replace(";", "");
+                string result;
+
+                // 2, 4글자 분류
+                if (message.Text.StartsWith("!장비 ") | message.Text.StartsWith("!장제 ") | message.Text.StartsWith("!장건 ")
+                    | message.Text.StartsWith("!ㅈㅂ ") | message.Text.StartsWith("!ㅈㅈ ") | message.Text.StartsWith("!ㅈㄱ "))
+                {
+                    result = message.Text.Substring(4).Replace(":", "").Replace(";", "");
+                }
+                else
+                {
+                    result = message.Text.Substring(6).Replace(":", "").Replace(";", "");
+                }
 
                 // 2글자면 앞에 "00" 추가, 3글자는 "0" 추가
                 if (result.Length == 2)
@@ -151,18 +183,43 @@ namespace Telegram_GirlsFrontline_BOT
                 }
             }
 
-            // "/도움말" 명령어 감지
+            // "!도움말" 명령어 감지
+            else if (message.Text.StartsWith("!도움말"))
+            {
+                var help = @"사용법:
+!인형제조 !인형제작 !인형건조 !총기제조
+!총기제작 !총기건조 !인형 !인제 !인조
+!ㅇㅎ !ㅇㅈ !총기 !총제 !총조 !ㅊㄱ !ㅊㅈ
+
+예) !인형제조 0:22
+!인형 022
+!ㅇㅎ 00:22
+!ㅇㅈ 0022
+
+!장비제조 !장비제작 !장비건조 !장비
+!장제 !장건 !ㅈㅂ !ㅈㅈ !ㅈㄱ
+
+예) !장비제조 0:05
+!장비 005
+!장제 00:05
+!ㅈㅂ 0005
+!ㅈㅈ 05 (한자리 X)";
+                await Bot.SendTextMessageAsync(message.Chat.Id, help);
+            }
+
+            // "/help" 명령어 감지
             else if (message.Text.StartsWith("/help"))
             {
                 var help = @"사용법:
-!인형제조 OR !총기제조 - 원하는 시간을 적어주세요.
-예) !인형제조 0:22 | 022 | 00:22 | 0022
+!ㅇㅎ - 원하는 시간을 적어주세요.
+예) !인형 0022
 결과) 0022|★★|PPK
 
-!장비제조 - 원하는 시간을 적어주세요.
-예) !장비제조 0:05 | 005 | 00:05 | 0005 | 05 (한자리 X)
+!ㅈㅂ - 원하는 시간을 적어주세요.
+예) !장비 0005
 결과) 0005|★★|BM 3-12X40(옵티컬)
 
+!도움말 - 상세한 도움말입니다.
 /help   - 도움말입니다.";
                 await Bot.SendTextMessageAsync(message.Chat.Id, help);
             }
